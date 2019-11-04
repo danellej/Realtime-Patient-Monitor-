@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <title>Patient Chart</title>
+</head>
+<body>
+  <div class="container">
+    <canvas id="myChart"></canvas>
+  </div>
+
+  <script>
+    let myChart = document.getElementById('myChart').getContext('2d');
+
+    // Global Options
+    Chart.defaults.global.defaultFontFamily = 'Lato';
+    Chart.defaults.global.defaultFontSize = 18;
+    Chart.defaults.global.defaultFontColor = '#777';
+
+    let massPopChart = new Chart(myChart, {
+      type:'line', // bar, horizontalBar, pie, line, doughnut, radar, polarArea
+      data:{
+        //use Moments
+        labels:[new Date().getHours(), new Date().getHours(), new Date().getHours(), new Date().getHours(), new Date().getHours(), new Date().getHours()],
+        datasets:[{
+          label:'Pulse rate',
+          data:[
+            70,
+            68,
+            65,
+            71,
+            71,
+            44
+          ],
+          backgroundColor:'green',
+        //   backgroundColor:[
+        //     'rgba(255, 99, 132, 0.6)',
+        //     'rgba(54, 162, 235, 0.6)',
+        //     'rgba(255, 206, 86, 0.6)',
+        //     'rgba(75, 192, 192, 0.6)',
+        //     'rgba(153, 102, 255, 0.6)',
+        //     'rgba(255, 159, 64, 0.6)',
+        //     'rgba(255, 99, 132, 0.6)'
+        //   ],
+          
+          fill: false,
+          borderWidth:1,
+          borderColor:'#777',
+          hoverBorderWidth:3,
+          hoverBorderColor:'#000'
+        }]
+      },
+      options:{
+        title:{
+          display:true,
+          text:'Patient 1 Pulse Rate',
+          fontSize:25
+        },
+        legend:{
+          display:true,
+          position:'right',
+          labels:{
+            fontColor:'#000'
+          }
+        },
+        layout:{
+          padding:{
+            left:50,
+            right:0,
+            bottom:0,
+            top:0
+          }
+        },
+        tooltips:{
+          enabled:true
+        }
+      }
+    });
+  </script>
+  
+  <script src="https://unpkg.com/@feathersjs/client@^4.3.0/dist/feathers.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+
+  <script>
+    // Socket.io setup (connect to backend)
+    const socket = io('http://localhost:3030');
+
+    // Init feathers app
+    const app = feathers();
+
+    // Register socket.io to talk to server
+    app.configure(feathers.socketio(socket));
+
+  //  document.getElementById('form').addEventListener('submit', sendIdea);
+
+    // async function sendIdea(e) {
+    //   e.preventDefault();
+
+    //   const text = document.getElementById('idea-text');
+    //   const tech = document.getElementById('idea-tech');
+    //   const viewer = document.getElementById('idea-viewer');
+
+    //   // Create new idea
+    //   app.service('ideas').create({
+    //     text: text.value,
+    //     tech: tech.value,
+    //     viewer: viewer.value
+    //   });
+
+    //   // Clear inputs
+    //   text.value = '';
+    //   tech.value = '';
+    //   viewer.value = '';
+    // }
+
+    function renderPatient(patient) {
+      document.getElementById(
+        'ideas'
+      ).innerHTML += `<div class="card bg-secondary my-3">
+            <div class="card-body">
+              <p class="lead">
+                <div>ID: ${patient.patientId}</div>
+                <div>Name: ${patient.name}</div>
+                <div>Age: ${patient.age}</div>
+                <small>${patient.time}</small>
+              </p>
+            </div>
+          </div>`;
+    }
+
+    async function init() {
+      // Find ideas
+      const patients = await app.service('patients').find();
+
+      // Add existing ideas to list
+      patients.forEach(renderPatient);
+
+      // Add idea in realtime
+      app.service('patients').on('created', renderPatient);
+    }
+
+    init();
+  </script>
+</body>
+</html>
